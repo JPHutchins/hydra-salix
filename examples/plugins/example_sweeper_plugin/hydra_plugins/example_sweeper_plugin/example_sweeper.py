@@ -1,5 +1,4 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 
 import itertools
 import logging
@@ -14,6 +13,7 @@ from hydra.plugins.launcher import Launcher
 from hydra.plugins.sweeper import Sweeper
 from hydra.types import TaskFunction
 from omegaconf import DictConfig, OmegaConf
+from salix import Struct
 
 # IMPORTANT:
 # If your plugin imports any module that takes more than a fraction of a second to import,
@@ -26,8 +26,7 @@ from omegaconf import DictConfig, OmegaConf
 log = logging.getLogger(__name__)
 
 
-@dataclass
-class LauncherConfig:
+class LauncherConfig(Struct, frozen=False):
     _target_: str = (
         "hydra_plugins.example_sweeper_plugin.example_sweeper.ExampleSweeper"
     )

@@ -3,7 +3,6 @@ import builtins
 import math
 import re
 from contextlib import nullcontext
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Union
 
 try:
@@ -11,6 +10,7 @@ try:
 except ImportError:
     from _pytest.python_api import RaisesContext  # type: ignore[attr-defined,no-redef]
 from pytest import mark, param, raises, warns
+from salix import Struct
 
 from hydra._internal.grammar import grammar_functions
 from hydra._internal.grammar.functions import Functions
@@ -1513,8 +1513,7 @@ def test_sweep_shuffle(value: str, expected: str) -> None:
     assert ret == expected
 
 
-@dataclass
-class CastResults:
+class CastResults(Struct, frozen=False):
     json_str: Union[
         str,
         Sweep,

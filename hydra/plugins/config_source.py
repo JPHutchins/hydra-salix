@@ -1,10 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import re
 from abc import abstractmethod
-from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from omegaconf import Container
+from salix import Struct
 
 from hydra.core.default_element import InputDefault
 from hydra.core.object_type import ObjectType
@@ -12,8 +12,7 @@ from hydra.errors import HydraException
 from hydra.plugins.plugin import Plugin
 
 
-@dataclass
-class ConfigResult:
+class ConfigResult(Struct, frozen=False):
     provider: str
     path: str
     config: Container

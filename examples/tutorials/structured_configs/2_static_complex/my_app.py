@@ -1,27 +1,25 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass, field
+
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class MySQLConfig:
+class MySQLConfig(Struct, frozen=False):
     host: str = "localhost"
     port: int = 3306
 
 
-@dataclass
-class UserInterface:
+class UserInterface(Struct, frozen=False):
     title: str = "My app"
     width: int = 1024
     height: int = 768
 
 
-@dataclass
-class MyConfig:
-    db: MySQLConfig = field(default_factory=MySQLConfig)
-    ui: UserInterface = field(default_factory=UserInterface)
+class MyConfig(Struct, frozen=False):
+    db: MySQLConfig = MySQLConfig()
+    ui: UserInterface = UserInterface()
 
 
 cs = ConfigStore.instance()

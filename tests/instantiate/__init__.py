@@ -1,11 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import collections
 import collections.abc
-from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Dict, List, NoReturn, Optional, Tuple
 
 from omegaconf import MISSING, DictConfig, ListConfig
+from salix import Struct
 
 from hydra.utils import UNSAFE_DISABLE_EXECUTION_CHECKS, instantiate
 from tests.instantiate.module_shadowed_by_function import a_function
@@ -118,8 +118,7 @@ def raise_exception_taking_no_argument() -> NoReturn:
     raise ExceptionTakingNoArgument()
 
 
-@dataclass
-class AClass:
+class AClass(Struct, frozen=False):
     a: Any
     b: Any
     c: Any
@@ -130,28 +129,24 @@ class AClass:
         return z
 
 
-@dataclass
-class BClass:
+class BClass(Struct, frozen=False):
     a: Any
     b: Any
     c: Any = "c"
     d: Any = "d"
 
 
-@dataclass
-class KeywordsInParamsClass:
+class KeywordsInParamsClass(Struct, frozen=False):
     target: Any
     partial: Any
 
 
-@dataclass
-class UntypedPassthroughConf:
+class UntypedPassthroughConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.UntypedPassthroughClass"
     a: Any = MISSING
 
 
-@dataclass
-class UntypedPassthroughClass:
+class UntypedPassthroughClass(Struct, frozen=False):
     a: Any
 
 
@@ -161,8 +156,7 @@ class IllegalType:
         return isinstance(other, IllegalType)
 
 
-@dataclass
-class AnotherClass:
+class AnotherClass(Struct, frozen=False):
     x: int
 
 
@@ -189,8 +183,7 @@ class Parameters:
         raise NotImplementedError("Pytorch parameters does not support deepcopy")
 
 
-@dataclass
-class Adam:
+class Adam(Struct, frozen=False):
     params: Parameters
     lr: float = 0.001
     betas: Tuple[float, ...] = (0.9, 0.999)
@@ -199,9 +192,8 @@ class Adam:
     amsgrad: bool = False
 
 
-@dataclass
-class NestingClass:
-    a: ASubclass = field(default_factory=lambda: ASubclass(10))
+class NestingClass(Struct, frozen=False):
+    a: ASubclass = ASubclass(10)
 
 
 nesting = NestingClass()
@@ -214,8 +206,7 @@ class ClassWithMissingModule:
         self.x = 1
 
 
-@dataclass
-class AdamConf:
+class AdamConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.Adam"
     lr: float = 0.001
     betas: Tuple[float, ...] = (0.9, 0.999)
@@ -224,14 +215,12 @@ class AdamConf:
     amsgrad: bool = False
 
 
-@dataclass
-class User:
+class User(Struct, frozen=False):
     name: str = MISSING
     age: int = MISSING
 
 
-@dataclass
-class UserGroup:
+class UserGroup(Struct, frozen=False):
     name: str = MISSING
     users: List[User] = MISSING
 
@@ -322,32 +311,27 @@ class Mapping:
 
 
 # Configs
-@dataclass
-class TransformConf: ...
+class TransformConf(Struct, frozen=False): ...
 
 
-@dataclass
-class CenterCropConf(TransformConf):
+class CenterCropConf(TransformConf, frozen=False):
     _target_: str = "tests.instantiate.CenterCrop"
     _partial_: bool = False
     size: int = MISSING
 
 
-@dataclass
-class RotationConf(TransformConf):
+class RotationConf(TransformConf, frozen=False):
     _target_: str = "tests.instantiate.Rotation"
     degrees: int = MISSING
 
 
-@dataclass
-class ComposeConf:
+class ComposeConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.Compose"
     _partial_: bool = False
     transforms: List[TransformConf] = MISSING
 
 
-@dataclass
-class TreeConf:
+class TreeConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.Tree"
     _partial_: bool = False
     left: Optional["TreeConf"] = None
@@ -355,23 +339,13 @@ class TreeConf:
     value: Any = MISSING
 
 
-@dataclass
-class MappingConf:
+class MappingConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.Mapping"
     _partial_: bool = False
     dictionary: Optional[Dict[str, "MappingConf"]] = None
 
-    def __init__(
-        self,
-        dictionary: Optional[Dict[str, "MappingConf"]] = None,
-        _partial_: bool = False,
-    ):
-        self.dictionary = dictionary
-        self._partial_ = _partial_
 
-
-@dataclass
-class SimpleDataClass:
+class SimpleDataClass(Struct, frozen=False):
     a: Any = None
     b: Any = None
 
@@ -394,34 +368,30 @@ class SimpleClass:
         return ["a", "b"]
 
 
-@dataclass
-class SimpleClassPrimitiveConf:
+class SimpleClassPrimitiveConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.SimpleClass"
     _convert_: str = "partial"
     a: Any = None
     b: Any = None
 
 
-@dataclass
-class SimpleClassNonPrimitiveConf:
+class SimpleClassNonPrimitiveConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.SimpleClass"
     _convert_: str = "none"
     a: Any = None
     b: Any = None
 
 
-@dataclass
-class SimpleClassDefaultPrimitiveConf:
+class SimpleClassDefaultPrimitiveConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.SimpleClass"
     a: Any = None
     b: Any = None
 
 
-@dataclass
-class NestedConf:
+class NestedConf(Struct, frozen=False):
     _target_: str = "tests.instantiate.SimpleClass"
-    a: Any = field(default_factory=lambda: User(name="a", age=1))
-    b: Any = field(default_factory=lambda: User(name="b", age=2))
+    a: Any = User(name="a", age=1)
+    b: Any = User(name="b", age=2)
 
 
 class TargetWithInstantiateInInit:

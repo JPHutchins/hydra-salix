@@ -1,8 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass, field
 from typing import Any, List
 
 from omegaconf import MISSING
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -30,36 +30,30 @@ class PostgreSQLConnection(DBConnection):
         self.timeout = timeout
 
 
-@dataclass
-class DBConfig:
+class DBConfig(Struct, frozen=False):
     driver: str = MISSING
     host: str = "localhost"
     port: int = 80
 
 
-@dataclass
-class MySQLConfig(DBConfig):
+class MySQLConfig(DBConfig, frozen=False):
     _target_: str = "my_app.MySQLConnection"
     driver: str = "MySQL"
     port: int = 1234
 
 
-@dataclass
-class PostGreSQLConfig(DBConfig):
+class PostGreSQLConfig(DBConfig, frozen=False):
     _target_: str = "my_app.PostgreSQLConnection"
     driver: str = "PostgreSQL"
     port: int = 5678
     timeout: int = 10
 
 
-@dataclass
-class Config:
-    defaults: List[Any] = field(
-        default_factory=lambda: [
-            "_self_",
-            {"db": "mysql"},
-        ]
-    )
+class Config(Struct, frozen=False):
+    defaults: List[Any] = [
+        "_self_",
+        {"db": "mysql"},
+    ]
     db: DBConfig = MISSING
 
 

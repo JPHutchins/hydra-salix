@@ -317,7 +317,7 @@ def instantiate(
                                   (and their fields).
                         object  : Passed objects are converted to dict, list and tuple.
                                   Structured Configs are converted to instances of the
-                                  backing dataclass / attr class.
+                                  backing Struct class.
                         all     : Passed objects are dicts, lists, tuples and
                                   primitives without a trace of OmegaConf containers.
                                   Structured configs are converted to primitive
@@ -337,7 +337,7 @@ def instantiate(
                    values or an explicit OmegaConf container instead.
                    A dict replaces a configured plain mapping, but merges into
                    a configured Structured Config or target config.
-                   Dataclass and attrs instances are passed through without
+                   Struct instances are passed through without
                    conversion or recursive instantiation.
     :return: if _target_ is a class name: the instantiated object
              if _target_ is a callable: the return value of the call

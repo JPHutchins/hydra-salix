@@ -1,15 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 from typing import List, Optional
 
 from omegaconf import DictConfig
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     list: Optional[List[int]] = None
 
 

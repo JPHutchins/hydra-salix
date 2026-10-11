@@ -1,8 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 from typing import Optional
 
 from omegaconf import MISSING
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -18,8 +18,7 @@ class Tree:
         self.right = right
 
 
-@dataclass
-class TreeConf:
+class TreeConf(Struct, frozen=False):
     _target_: str = "my_app.Tree"
     value: int = MISSING
     left: Optional["TreeConf"] = None
@@ -27,8 +26,7 @@ class TreeConf:
 
 
 # we will populate the tree from the config file with the matching name
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     tree: TreeConf = MISSING
 
 

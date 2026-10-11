@@ -1,12 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import re
-from dataclasses import dataclass, field
 from textwrap import dedent
 from typing import Any, List, cast
 
 from omegaconf import MISSING, DictConfig, OmegaConf, ValidationError, open_dict
 from omegaconf.errors import InterpolationResolutionError
 from pytest import mark, param, raises
+from salix import Struct
 
 from hydra import __version__, version
 from hydra._internal.config_loader_impl import ConfigLoaderImpl
@@ -28,8 +28,7 @@ from tests.instantiate import UserGroup
 chdir_hydra_root()
 
 
-@dataclass
-class MySQLConfig:
+class MySQLConfig(Struct, frozen=False):
     driver: str = MISSING
     host: str = MISSING
     port: int = MISSING
@@ -37,10 +36,9 @@ class MySQLConfig:
     password: str = MISSING
 
 
-@dataclass
-class TopLevelConfig:
+class TopLevelConfig(Struct, frozen=False):
     normal_yaml_config: bool = MISSING
-    db: MySQLConfig = field(default_factory=MySQLConfig)
+    db: MySQLConfig = MySQLConfig()
 
 
 @mark.parametrize(
@@ -525,32 +523,26 @@ def test_load_schema_as_config(hydra_restore_singletons: Any) -> None:
     }
 
 
-@dataclass
-class Plugin:
+class Plugin(Struct, frozen=False):
     name: str = MISSING
     params: Any = MISSING
 
 
-@dataclass
-class ConcretePlugin(Plugin):
+class ConcretePlugin(Plugin, frozen=False):
     name: str = "foobar_plugin"
 
-    @dataclass
-    class FoobarParams:
+    class FoobarParams(Struct, frozen=False):
         foo: int = 10
 
-    params: FoobarParams = field(default_factory=FoobarParams)
+    params: FoobarParams = FoobarParams()
 
 
-@dataclass
-# A plugin that does not extend the parent Plugin class
-class InvalidPlugin:
+class InvalidPlugin(Struct, frozen=False):
     name: str = "invalid_plugin"
 
 
-@dataclass
-class Config:
-    plugin: Plugin = field(default_factory=Plugin)
+class Config(Struct, frozen=False):
+    plugin: Plugin = Plugin()
 
 
 def test_overlapping_schemas(hydra_restore_singletons: Any) -> None:

@@ -169,7 +169,6 @@ UNCONTROLLED_EXECUTION_TARGETS = (
         "ctypes.oledll.LoadLibrary",
         "ctypes.pydll.LoadLibrary",
         "ctypes.windll.LoadLibrary",
-        "dataclasses.make_dataclass",
         "importlib.import_module",
         "importlib.machinery.ExtensionFileLoader.create_module",
         "importlib.machinery.ExtensionFileLoader.exec_module",

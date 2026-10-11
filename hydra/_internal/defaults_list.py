@@ -1,11 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import copy
-from dataclasses import dataclass, field
 from textwrap import dedent
-from typing import Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from omegaconf import OmegaConf
+from salix import Struct
 
 from hydra import MissingConfigException
 from hydra._internal.config_repository import IConfigRepository
@@ -27,21 +27,23 @@ cs = ConfigStore.instance()
 cs.store(name="_dummy_empty_config_", node={}, provider="hydra")
 
 
-@dataclass
-class Deletion:
+class Deletion(Struct, frozen=False, eq=False):
     name: Optional[str]
-    used: bool = field(default=False, compare=False)
+    used: bool = False
+
+    def __eq__(self, other: Any) -> Any:
+        if type(other) is not type(self):
+            return NotImplemented
+        return self.name == other.name
 
 
-@dataclass
-class OverrideMetadata:
+class OverrideMetadata(Struct, frozen=False):
     external_override: bool
     containing_config_path: Optional[str] = None
     used: bool = False
     relative_key: Optional[str] = None
 
 
-@dataclass
 class Overrides:
     override_choices: Dict[str, Optional[Union[str, List[str]]]]
     override_metadata: Dict[str, OverrideMetadata]
@@ -244,8 +246,7 @@ class Overrides:
         self.deletions[key].used = True
 
 
-@dataclass
-class DefaultsList:
+class DefaultsList(Struct, frozen=False):
     defaults: List[ResultDefault]
     defaults_tree: DefaultsTreeNode
     config_overrides: List[Override]

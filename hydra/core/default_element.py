@@ -1,10 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import re
-from dataclasses import dataclass, field
 from textwrap import dedent
-from typing import List, Optional, Pattern, Union
+from typing import Any, List, Optional, Pattern, Tuple, Union
 
 from omegaconf import AnyNode, DictConfig
+from salix import Struct
 
 from hydra.errors import ConfigCompositionException
 
@@ -12,23 +12,32 @@ _defaults_list_interpolation_pattern: Pattern[str] = re.compile(r"\${\s*([^{}]*?
 _legacy_interpolation_pattern: Pattern[str] = re.compile(r"\${defaults\.\d+\.")
 
 
-@dataclass
-class ResultDefault:
+class ResultDefault(Struct, frozen=False, eq=False, repr=False):
     config_path: Optional[str] = None
     parent: Optional[str] = None
     package: Optional[str] = None
     is_self: bool = False
-    primary: bool = field(default=False, compare=False)
+    primary: bool = False
 
-    override_key: Optional[str] = field(default=None, compare=False)
+    override_key: Optional[str] = None
+
+    def __eq__(self, other: Any) -> Any:
+        if type(other) is not type(self):
+            return NotImplemented
+        return (self.config_path, self.parent, self.package, self.is_self) == (
+            other.config_path,
+            other.parent,
+            other.package,
+            other.is_self,
+        )
 
     def __repr__(self) -> str:
-        attrs = []
+        attributes = []
         attr_names = "config_path", "package", "parent"
         for attr in attr_names:
             value = getattr(self, attr)
             if value is not None:
-                attrs.append(f'{attr}="{value}"')
+                attributes.append(f'{attr}="{value}"')
 
         flags = []
         flag_names = ["is_self", "primary"]
@@ -37,17 +46,24 @@ class ResultDefault:
             if value:
                 flags.append(f"{flag}=True")
 
-        ret = f"{','.join(attrs + flags)}"
+        ret = f"{','.join(attributes + flags)}"
         return f"{type(self).__name__}({ret})"
 
 
-@dataclass
-class InputDefault:
+class InputDefault(Struct, frozen=False, eq=False, repr=False):
     package: Optional[str] = None
-    parent_base_dir: Optional[str] = field(default=None, compare=False, repr=False)
-    parent_package: Optional[str] = field(default=None, compare=False, repr=False)
-    package_header: Optional[str] = field(default=None, compare=False)
-    primary: bool = field(default=False, compare=False)
+    parent_base_dir: Optional[str] = None
+    parent_package: Optional[str] = None
+    package_header: Optional[str] = None
+    primary: bool = False
+
+    def _compared_fields(self) -> Tuple[Any, ...]:
+        return (self.package,)
+
+    def __eq__(self, other: Any) -> Any:
+        if type(other) is not type(self):
+            return NotImplemented
+        return self._compared_fields() == other._compared_fields()
 
     def is_self(self) -> bool:
         raise NotImplementedError()
@@ -92,7 +108,7 @@ class InputDefault:
         raise NotImplementedError()
 
     def _get_parent_package(self) -> Optional[str]:
-        ret = self.__dict__["parent_package"]
+        ret = self.parent_package
         assert ret is None or isinstance(ret, str)
         return ret
 
@@ -100,13 +116,10 @@ class InputDefault:
         return False
 
     def is_deleted(self) -> bool:
-        if "deleted" in self.__dict__:
-            return bool(self.__dict__["deleted"])
-        else:
-            return False
+        return bool(getattr(self, "deleted", False))
 
     def set_package_header(self, package_header: Optional[str]) -> None:
-        assert self.__dict__["package_header"] is None
+        assert self.package_header is None
 
         if package_header is None:
             return
@@ -119,18 +132,18 @@ class InputDefault:
             else:
                 package_header = f"_global_.{package_header}"
 
-        self.__dict__["package_header"] = package_header
+        self.package_header = package_header
 
     def get_package_header(self) -> Optional[str]:
-        ret = self.__dict__["package_header"]
+        ret = self.package_header
         assert ret is None or isinstance(ret, str)
         return ret
 
     def get_package(self, default_to_package_header: bool = True) -> Optional[str]:
-        if self.__dict__["package"] is None and default_to_package_header:
-            ret = self.__dict__["package_header"]
+        if self.package is None and default_to_package_header:
+            ret = self.package_header
         else:
-            ret = self.__dict__["package"]
+            ret = self.package
         assert ret is None or isinstance(ret, str)
         return ret
 
@@ -160,7 +173,7 @@ class InputDefault:
             return ret[lgi + len("_global_") + 1 :]
 
     def __repr__(self) -> str:
-        attrs = []
+        attributes = []
         attr_names = self._get_attributes()
         for attr in attr_names:
             value = getattr(self, attr)
@@ -169,7 +182,7 @@ class InputDefault:
                     svalue = f'"{value}"'
                 else:
                     svalue = value
-                attrs.append(f"{attr}={svalue}")
+                attributes.append(f"{attr}={svalue}")
 
         flags = []
         flag_names = self._get_flags()
@@ -178,7 +191,7 @@ class InputDefault:
             if value:
                 flags.append(f"{flag}=True")
 
-        ret = f"{','.join(attrs)}"
+        ret = f"{','.join(attributes)}"
 
         if len(flags) > 0:
             ret = f"{ret},{','.join(flags)}"
@@ -253,8 +266,7 @@ class InputDefault:
         raise NotImplementedError()
 
 
-@dataclass
-class VirtualRoot(InputDefault):
+class VirtualRoot(InputDefault, frozen=False, eq=False, repr=False):
     def is_virtual(self) -> bool:
         return True
 
@@ -301,8 +313,7 @@ class VirtualRoot(InputDefault):
         return False
 
 
-@dataclass(repr=False)
-class ConfigDefault(InputDefault):
+class ConfigDefault(InputDefault, frozen=False, eq=False, repr=False):
     path: Optional[str] = None
     optional: bool = False
     deleted: Optional[bool] = None
@@ -393,6 +404,9 @@ class ConfigDefault(InputDefault):
         else:
             return path[0:idx]
 
+    def _compared_fields(self) -> Tuple[Any, ...]:
+        return (self.package, self.path, self.optional, self.deleted)
+
     def _get_attributes(self) -> List[str]:
         return ["path", "package", "deleted"]
 
@@ -425,8 +439,7 @@ class ConfigDefault(InputDefault):
         return False
 
 
-@dataclass(repr=False)
-class GroupDefault(InputDefault):
+class GroupDefault(InputDefault, frozen=False, eq=False, repr=False):
     # config group name if present
     group: Optional[str] = None
     # config file name
@@ -436,12 +449,12 @@ class GroupDefault(InputDefault):
     override: bool = False
     deleted: Optional[bool] = None
 
-    config_name_overridden: bool = field(default=False, compare=False, repr=False)
+    config_name_overridden: bool = False
     # True if this item was added using +foo=bar from the external overrides
-    external_append: bool = field(default=False, compare=False, repr=False)
+    external_append: bool = False
 
-    normalized_shorthand: bool = field(default=False, compare=False, repr=False)
-    original_group: Optional[str] = field(default=None, compare=False, repr=False)
+    normalized_shorthand: bool = False
+    original_group: Optional[str] = None
 
     def __post_init__(self) -> None:
         assert self.group is not None and self.group != ""
@@ -508,6 +521,16 @@ class GroupDefault(InputDefault):
         else:
             return self.group
 
+    def _compared_fields(self) -> Tuple[Any, ...]:
+        return (
+            self.package,
+            self.group,
+            self.value,
+            self.optional,
+            self.override,
+            self.deleted,
+        )
+
     def _get_attributes(self) -> List[str]:
         return ["group", "value", "package", "deleted"]
 
@@ -571,16 +594,19 @@ See http://hydra.cc/docs/1.1/upgrades/1.0_to_1.1/defaults_list_interpolation for
         return self.external_append
 
 
-@dataclass
-class DefaultsTreeNode:
+class DefaultsTreeNode(Struct, frozen=False, eq=False, repr=False):
     node: InputDefault
     children: Optional[List[Union["DefaultsTreeNode", InputDefault]]] = None
 
-    parent: Optional["DefaultsTreeNode"] = field(
-        default=None,
-        repr=False,
-        compare=False,
-    )
+    parent: Optional["DefaultsTreeNode"] = None
+
+    def __eq__(self, other: Any) -> Any:
+        if type(other) is not type(self):
+            return NotImplemented
+        return self.node == other.node and self.children == other.children
+
+    def __repr__(self) -> str:
+        return f"DefaultsTreeNode(node={self.node!r}, children={self.children!r})"
 
     def parent_node(self) -> Optional[InputDefault]:
         if self.parent is None:

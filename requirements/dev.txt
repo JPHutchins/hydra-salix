@@ -1,5 +1,4 @@
 -r requirements.txt
-attrs
 bandit
 ruff==0.15.22
 build

@@ -1,5 +1,4 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 
 import logging
 from pathlib import Path
@@ -18,6 +17,7 @@ from hydra.core.utils import (
 from hydra.plugins.launcher import Launcher
 from hydra.types import TaskFunction
 from omegaconf import DictConfig, open_dict
+from salix import Struct
 
 # IMPORTANT:
 # If your plugin imports any module that takes more than a fraction of a second to import,
@@ -31,8 +31,7 @@ from omegaconf import DictConfig, open_dict
 log = logging.getLogger(__name__)
 
 
-@dataclass
-class LauncherConfig:
+class LauncherConfig(Struct, frozen=False):
     _target_: str = (
         "hydra_plugins.example_launcher_plugin.example_launcher.ExampleLauncher"
     )

@@ -1,12 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
+
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass(frozen=True)
-class SerialPort:
+class SerialPort(Struct):
     baud_rate: int = 19200
     data_bits: int = 8
     stop_bits: int = 1

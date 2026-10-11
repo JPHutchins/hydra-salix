@@ -11,13 +11,11 @@ import os
 import pickle
 import re
 import warnings
-from dataclasses import InitVar, dataclass, field
 from functools import partial
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 from unittest.mock import NonCallableMock
 
-import attr
 from omegaconf import (
     MISSING,
     AnyNode,
@@ -29,6 +27,7 @@ from omegaconf import (
 )
 from omegaconf.errors import ValidationError
 from pytest import fixture, mark, param, raises, warns
+from salix import Struct
 
 from hydra._internal import target_policy
 from hydra._internal.instantiate import _instantiate2
@@ -715,12 +714,10 @@ def test_callsite_positional_override_rejects_omegaconf_syntax(
 def test_callsite_override_does_not_inspect_structured_runtime_value(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class DictRuntimeValue(dict):  # type: ignore[type-arg]
+    class DictRuntimeValue(dict, Struct, frozen=False):  # type: ignore[type-arg]
         pass
 
-    @attr.define(slots=False)
-    class ListRuntimeValue(list):  # type: ignore[type-arg]
+    class ListRuntimeValue(list, Struct, frozen=False):  # type: ignore[type-arg]
         pass
 
     mapping = DictRuntimeValue()
@@ -1260,20 +1257,15 @@ def test_structured_runtime_override_is_passed_through(
 def test_structured_runtime_override_with_target_is_passed_through(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class RuntimeValue:
+    class RuntimeValue(Struct, frozen=False):
         _target_: str
         value: int
-        token: InitVar[str]
-        runtime_token: str = field(init=False)
-
-        def __post_init__(self, token: str) -> None:
-            self.runtime_token = token
+        runtime_token: str
 
     runtime_value = RuntimeValue(
         _target_="tests.instantiate.AnotherClass",
         value=10,
-        token="secret",
+        runtime_token="secret",
     )
 
     result = instantiate_func(
@@ -1286,27 +1278,10 @@ def test_structured_runtime_override_with_target_is_passed_through(
     assert result.kwargs["value"].runtime_token == "secret"
 
 
-def test_attrs_runtime_override_is_passed_through(instantiate_func: Any) -> None:
-    @attr.define
-    class RuntimeValue:
-        value: int
-
-    runtime_value = RuntimeValue(value=10)
-
-    result = instantiate_func(
-        {"_target_": "tests.instantiate.ArgsClass"},
-        value=runtime_value,
-        _convert_=ConvertMode.OBJECT,
-    )
-
-    assert result.kwargs["value"] is runtime_value
-
-
 def test_dataclass_dict_subclass_runtime_override_is_passed_through(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class RuntimeValue(dict):  # type: ignore[type-arg]
+    class RuntimeValue(dict, Struct, frozen=False):  # type: ignore[type-arg]
         pass
 
     runtime_value = RuntimeValue()
@@ -1320,11 +1295,10 @@ def test_dataclass_dict_subclass_runtime_override_is_passed_through(
     assert result.kwargs["value"] is runtime_value
 
 
-def test_attrs_list_subclass_runtime_override_is_passed_through(
+def test_list_subclass_runtime_override_is_passed_through(
     instantiate_func: Any,
 ) -> None:
-    @attr.define(slots=False)
-    class RuntimeValue(list):  # type: ignore[type-arg]
+    class RuntimeValue(list, Struct, frozen=False):  # type: ignore[type-arg]
         pass
 
     runtime_value = RuntimeValue()
@@ -1354,8 +1328,7 @@ def test_omegaconf_structured_runtime_override_is_instantiated(
 def test_omegaconf_structured_runtime_override_merges_with_configured_value(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class TreeValueOverride:
+    class TreeValueOverride(Struct, frozen=False):
         value: int
 
     runtime_config = OmegaConf.structured(TreeValueOverride(value=20))
@@ -1381,10 +1354,9 @@ def test_omegaconf_structured_runtime_override_merges_with_configured_value(
 def test_regression_2350_dict_override_replaces_configured_dict(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
-        value: Dict[str, int] = field(default_factory=lambda: {"configured": 10})
+        value: Dict[str, int] = {"configured": 10}
 
     result = instantiate_func(
         Config,
@@ -1397,8 +1369,7 @@ def test_regression_2350_dict_override_replaces_configured_dict(
 def test_dict_override_for_unconfigured_target_parameter(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
 
     result = instantiate_func(Config, extra={"value": 10})
@@ -1515,8 +1486,7 @@ def test_dict_override_merge_is_independent_of_callsite_argument_order(
 def test_dict_override_merges_interpolated_structured_config(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class Value:
+    class Value(Struct, frozen=False):
         count: int = 10
         label: str = "configured"
 
@@ -1588,25 +1558,20 @@ def test_dict_override_merges_resolver_result_target(
 def test_dict_override_merges_structured_config_fields(
     instantiate_func: Any,
 ) -> None:
-    @dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         count: int = 10
         label: str = "configured"
 
-    @dataclass
-    class Value:
+    class Value(Struct, frozen=False):
         count: int = 10
         derived: int = "${.count}"  # type: ignore[assignment]
         label: str = "configured"
-        child: Child = field(default_factory=Child)
-        tags: Dict[str, str] = field(
-            default_factory=lambda: {"env": "prod", "team": "ml"}
-        )
+        child: Child = Child()
+        tags: Dict[str, str] = {"env": "prod", "team": "ml"}
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
-        value: Value = field(default_factory=Value)
+        value: Value = Value()
 
     cfg = OmegaConf.structured(Config)
     OmegaConf.set_readonly(cfg, True)
@@ -1644,46 +1609,28 @@ def test_dict_override_merges_structured_config_fields(
 
 
 @mark.parametrize("convert", list(ConvertMode))
-@mark.parametrize("runtime_type", ["dataclass", "attrs"])
 @mark.parametrize("container", ["direct", "mapping", "list", "tuple"])
 def test_structured_config_dict_override_preserves_nested_runtime_object(
     instantiate_func: Any,
     container: str,
-    runtime_type: str,
     convert: ConvertMode,
 ) -> None:
-    @dataclass
-    class RuntimeValue:
+    class RuntimeValue(Struct, frozen=False):
         _target_: str
         value: int
-        token: InitVar[str]
-        runtime_token: str = field(init=False)
+        runtime_token: str
 
-        def __post_init__(self, token: str) -> None:
-            self.runtime_token = token
-
-    @attr.define
-    class AttrsRuntimeValue:
-        _target_: str
-        value: int
-
-    @dataclass
-    class Value:
+    class Value(Struct, frozen=False):
         payload: Any = None
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
-        value: Value = field(default_factory=Value)
+        value: Value = Value()
 
-    runtime_value = (
-        RuntimeValue(
-            _target_="tests.instantiate.AnotherClass",
-            value=10,
-            token="secret",
-        )
-        if runtime_type == "dataclass"
-        else AttrsRuntimeValue("tests.instantiate.AnotherClass", 10)
+    runtime_value = RuntimeValue(
+        _target_="tests.instantiate.AnotherClass",
+        value=10,
+        runtime_token="secret",
     )
     payload = {
         "direct": runtime_value,
@@ -1707,18 +1654,15 @@ def test_structured_config_dict_override_preserves_nested_runtime_object(
 def test_structured_config_dict_override_preserves_typed_runtime_object(
     instantiate_func: Any, convert: ConvertMode
 ) -> None:
-    @dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         value: int = 10
 
-    @dataclass
-    class Value:
-        child: Child = field(default_factory=Child)
+    class Value(Struct, frozen=False):
+        child: Child = Child()
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
-        value: Value = field(default_factory=Value)
+        value: Value = Value()
 
     child = Child(value=20)
     result = instantiate_func(Config, value={"child": child}, _convert_=convert)
@@ -1731,8 +1675,7 @@ def test_structured_config_dict_override_preserves_typed_runtime_object(
 def test_nested_target_result_preserves_runtime_object(
     instantiate_func: Any, container: str
 ) -> None:
-    @dataclass
-    class RuntimeValue:
+    class RuntimeValue(Struct, frozen=False):
         value: int
 
     runtime_value = RuntimeValue(value=10)
@@ -1751,12 +1694,10 @@ def test_dict_override_materializes_structured_config_with_allow_objects(
 ) -> None:
     class RuntimeObject: ...
 
-    @dataclass
-    class Value:
+    class Value(Struct, frozen=False):
         payload: Any = RuntimeObject()
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
         value: Optional[Value] = None
 
@@ -1774,13 +1715,11 @@ def test_dict_override_materializes_structured_config_with_allow_objects(
 def test_dict_override_materialized_structured_config_resolves_outside_subtree(
     instantiate_func: Any, configured_value: Any
 ) -> None:
-    @dataclass
-    class Value:
+    class Value(Struct, frozen=False):
         count: int = 10
         inherited: int = "${..template}"  # type: ignore[assignment]
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
         template: int = 20
         value: Optional[Value] = configured_value
@@ -1811,23 +1750,19 @@ def test_dict_override_materialized_structured_config_resolves_outside_subtree(
 def test_dict_override_merges_target_nested_in_structured_config(
     instantiate_func: Any, recursive: bool, expected: Any
 ) -> None:
-    @dataclass
-    class Value:
-        child: Dict[str, Any] = field(
-            default_factory=lambda: {
+    class Value(Struct, frozen=False):
+        child: Dict[str, Any] = {
+            "_target_": "tests.instantiate.Tree",
+            "value": 10,
+            "left": {
                 "_target_": "tests.instantiate.Tree",
-                "value": 10,
-                "left": {
-                    "_target_": "tests.instantiate.Tree",
-                    "value": 30,
-                },
-            }
-        )
+                "value": 30,
+            },
+        }
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         _target_: str = "tests.instantiate.ArgsClass"
-        value: Value = field(default_factory=Value)
+        value: Value = Value()
 
     result = instantiate_func(
         Config,
@@ -5285,8 +5220,7 @@ class ListValues:
 
 
 def test_dict_with_structured_config(instantiate_func: Any) -> None:
-    @dataclass
-    class DictValuesConf:
+    class DictValuesConf(Struct, frozen=False):
         _target_: str = "tests.instantiate.test_instantiate.DictValues"
         d: Dict[str, User] = MISSING
 
@@ -5306,8 +5240,7 @@ def test_dict_with_structured_config(instantiate_func: Any) -> None:
 
 
 def test_list_with_structured_config(instantiate_func: Any) -> None:
-    @dataclass
-    class ListValuesConf:
+    class ListValuesConf(Struct, frozen=False):
         _target_: str = "tests.instantiate.test_instantiate.ListValues"
         d: List[User] = MISSING
 
@@ -5328,8 +5261,7 @@ def test_list_with_structured_config(instantiate_func: Any) -> None:
 
 
 def test_list_as_none(instantiate_func: Any) -> None:
-    @dataclass
-    class ListValuesConf:
+    class ListValuesConf(Struct, frozen=False):
         _target_: str = "tests.instantiate.test_instantiate.ListValues"
         d: Optional[List[User]] = None
 
@@ -5339,8 +5271,7 @@ def test_list_as_none(instantiate_func: Any) -> None:
 
 
 def test_dict_as_none(instantiate_func: Any) -> None:
-    @dataclass
-    class DictValuesConf:
+    class DictValuesConf(Struct, frozen=False):
         _target_: str = "tests.instantiate.test_instantiate.DictValues"
         d: Optional[Dict[str, User]] = None
 

@@ -5,7 +5,6 @@ import os
 import re
 import sys
 from contextlib import contextmanager
-from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from os.path import splitext
@@ -14,6 +13,7 @@ from textwrap import dedent
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 from omegaconf import DictConfig, OmegaConf, open_dict, read_write
+from salix import Struct
 
 from hydra._internal.deprecation_warning import deprecation_warning
 from hydra.core.hydra_config import HydraConfig
@@ -241,11 +241,10 @@ def get_valid_filename(s: str) -> str:
     return re.sub(r"(?u)[^-\w.]", "", s)
 
 
-@dataclass
-class OverrideDirnameOptions:
+class OverrideDirnameOptions(Struct, frozen=False):
     kv_sep: str = "="
     item_sep: str = ","
-    exclude_keys: List[str] = field(default_factory=list)
+    exclude_keys: List[str] = []
     element_resolver: Optional[str] = None
 
 
@@ -421,8 +420,7 @@ class JobStatus(Enum):
     FAILED = 2
 
 
-@dataclass
-class JobReturn:
+class JobReturn(Struct, frozen=False):
     overrides: Optional[Sequence[str]] = None
     cfg: Optional[DictConfig] = None
     hydra_cfg: Optional[DictConfig] = None

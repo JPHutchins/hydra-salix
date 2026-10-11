@@ -6,11 +6,11 @@ import pkgutil
 import sys
 import warnings
 from collections import defaultdict
-from dataclasses import dataclass, field
 from timeit import default_timer as timer
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from omegaconf import DictConfig
+from salix import Struct
 
 from hydra._internal.sources_registry import SourcesRegistry
 from hydra.core.singleton import Singleton
@@ -33,11 +33,10 @@ PLUGIN_TYPES: List[Type[Plugin]] = [
 ]
 
 
-@dataclass
-class ScanStats:
+class ScanStats(Struct, frozen=False):
     total_time: float = 0
     total_modules_import_time: float = 0
-    modules_import_time: Dict[str, float] = field(default_factory=dict)
+    modules_import_time: Dict[str, float] = {}
 
 
 class Plugins(metaclass=Singleton):

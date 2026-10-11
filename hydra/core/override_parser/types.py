@@ -2,13 +2,13 @@
 import decimal
 import fnmatch
 from copy import copy
-from dataclasses import dataclass, field
 from enum import Enum
 from random import shuffle
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union, cast
 
 from omegaconf import OmegaConf
 from omegaconf._utils import is_structured_config
+from salix import Struct
 
 from hydra._internal.grammar.utils import _ESC_QUOTED_STR, escape_special_characters
 from hydra.core.config_loader import ConfigLoader
@@ -21,8 +21,7 @@ class Quote(Enum):
     double = 1
 
 
-@dataclass(frozen=True)
-class QuotedString:
+class QuotedString(Struct, frozen=True):
     text: str
 
     quote: Quote
@@ -70,26 +69,32 @@ class QuotedString:
         return f"{qc}{esc_text}{qc}"
 
 
-@dataclass
-class Sweep:
-    tags: Set[str] = field(default_factory=set)
+class Sweep(Struct, frozen=False):
+    tags: Set[str] = set()
 
 
-@dataclass
-class ChoiceSweep(Sweep):
+class ChoiceSweep(Sweep, frozen=False):
     # simple form: a,b,c
     # explicit form: choices(a,b,c)
-    list: List["ParsedElementType"] = field(default_factory=list)
+    list: List["ParsedElementType"] = []
     simple_form: bool = False
     shuffle: bool = False
 
 
-@dataclass
-class FloatRange:
+class FloatRange(Struct, frozen=False, eq=False):
     start: Union[decimal.Decimal, float, int]
     stop: Union[decimal.Decimal, float, int]
     step: Union[decimal.Decimal, float, int]
-    _idx: int = field(default=0, init=False, repr=False, compare=False)
+    _idx: int = 0
+
+    def __eq__(self, other: Any) -> Any:
+        if type(other) is not type(self):
+            return NotImplemented
+        return (self.start, self.stop, self.step) == (
+            other.start,
+            other.stop,
+            other.step,
+        )
 
     def __post_init__(self) -> None:
         self.start = decimal.Decimal(str(self.start))
@@ -122,8 +127,7 @@ class FloatRange:
             )
 
 
-@dataclass
-class RangeSweep(Sweep):
+class RangeSweep(Sweep, frozen=False):
     """
     Discrete range of numbers
     """
@@ -151,8 +155,7 @@ class RangeSweep(Sweep):
             return FloatRange(start, stop, step)
 
 
-@dataclass
-class IntervalSweep(Sweep):
+class IntervalSweep(Sweep, frozen=False):
     start: Optional[float] = None
     end: Optional[float] = None
 
@@ -198,17 +201,15 @@ class ValueType(Enum):
     INTERVAL_SWEEP = 6
 
 
-@dataclass
-class Key:
+class Key(Struct, frozen=False):
     # the config-group or config dot-path
     key_or_group: str
     package: Optional[str] = None
 
 
-@dataclass
-class Glob:
-    include: List[str] = field(default_factory=list)
-    exclude: List[str] = field(default_factory=list)
+class Glob(Struct, frozen=False):
+    include: List[str] = []
+    exclude: List[str] = []
 
     def filter(self, names: List[str]) -> List[str]:
         def match(s: str, globs: List[str]) -> bool:
@@ -225,8 +226,7 @@ class Glob:
         return res
 
 
-@dataclass
-class ListExtensionOverrideValue:
+class ListExtensionOverrideValue(Struct, frozen=False):
     values: List["ParsedElementType"]
 
 
@@ -248,8 +248,7 @@ class Transformer:
         return Transformer.str(x)
 
 
-@dataclass
-class Override:
+class Override(Struct, frozen=False):
     # The type of the override (Change, Add or Remove config option or config group choice)
     type: OverrideType
 

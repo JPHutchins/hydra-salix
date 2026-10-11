@@ -1,15 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass, field
 from typing import Any, List
 
-from omegaconf import MISSING, OmegaConf  # Do not confuse with dataclass.MISSING
+from omegaconf import MISSING, OmegaConf
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class MySQLConfig:
+class MySQLConfig(Struct, frozen=False):
     driver: str = "mysql"
     host: str = "localhost"
     port: int = 3306
@@ -17,8 +16,7 @@ class MySQLConfig:
     password: str = "secret"
 
 
-@dataclass
-class PostGreSQLConfig:
+class PostGreSQLConfig(Struct, frozen=False):
     driver: str = "postgresql"
     host: str = "localhost"
     port: int = 5432
@@ -33,10 +31,8 @@ defaults = [
 ]
 
 
-@dataclass
-class Config:
-    # this is unfortunately verbose due to @dataclass limitations
-    defaults: List[Any] = field(default_factory=lambda: defaults)
+class Config(Struct, frozen=False):
+    defaults: List[Any] = defaults
 
     # Hydra will populate this field based on the defaults list
     db: Any = MISSING
