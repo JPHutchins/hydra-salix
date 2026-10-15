@@ -1,12 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
+
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class MySQLConfig:
+class MySQLConfig(Struct, frozen=False):
     host: str = "localhost"
     port: int = 3306
 

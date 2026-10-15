@@ -1,54 +1,46 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 from typing import Any
 
 from omegaconf import MISSING
+from salix import Struct
 
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class ConfigWithoutGroup:
+class ConfigWithoutGroup(Struct, frozen=False):
     group: bool = False
 
 
-@dataclass
-class ConfigWithUnicode:
+class ConfigWithUnicode(Struct, frozen=False):
     group: str = "数据库"
 
 
-@dataclass
-class Cifar10:
+class Cifar10(Struct, frozen=False):
     name: str = "cifar10"
     path: str = "/datasets/cifar10"
 
 
-@dataclass
-class ImageNet:
+class ImageNet(Struct, frozen=False):
     name: str = "imagenet"
     path: str = "/datasets/imagenet"
 
 
-@dataclass
-class ConfigWithoutExt:
+class ConfigWithoutExt(Struct, frozen=False):
     foo: str = "bar"
 
 
-@dataclass
-class Adam:
+class Adam(Struct, frozen=False):
     type: str = "adam"
     lr: float = 0.1
     beta: float = 0.01
 
 
-@dataclass
-class Nesterov:
+class Nesterov(Struct, frozen=False):
     type: str = "nesterov"
     lr: float = 0.001
 
 
-@dataclass
-class Optimizer:
+class Optimizer(Struct, frozen=False):
     optimizer: Any = MISSING
 
 

@@ -1,7 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable
+
+from salix import Struct
 
 TaskFunction = Callable[[Any], Any]
 
@@ -11,8 +12,7 @@ if TYPE_CHECKING:
     from hydra.core.config_loader import ConfigLoader
 
 
-@dataclass
-class HydraContext:
+class HydraContext(Struct, frozen=False):
     config_loader: "ConfigLoader"
     callbacks: "Callbacks"
     execution_whitelist: Any = None
@@ -36,12 +36,12 @@ class ConvertMode(Enum):
 
     If "partial", config-like configs will be converted to native python
     containers (list and dict), unless they are structured configs (
-    dataclasses or attr instances). Structured configs remain as DictConfig objects.
+    Struct instances). Structured configs remain as DictConfig objects.
 
     If "object", config-like configs will be converted to native python
     containers (list and dict), unless they are structured configs (
-    dataclasses or attr instances). Structured configs are converted to instances
-    of the backing dataclass or attr class using OmegaConf.to_object.
+    Struct instances). Structured configs are converted to instances
+    of the backing Struct class using OmegaConf.to_object.
 
     If "all", config-like configs will all be converted to native python
     containers (list and dict).
@@ -52,7 +52,7 @@ class ConvertMode(Enum):
     # Convert the OmegaConf config to primitive container, Structured Configs are preserved
     PARTIAL = "partial"
     # Convert the OmegaConf config to primitive container, Structured Configs are converted to
-    # dataclass / attr class instances.
+    # Struct instances.
     OBJECT = "object"
     # Fully convert the OmegaConf config to primitive containers (dict, list and primitives).
     ALL = "all"

@@ -1,7 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import MutableSequence, Optional, Union
+
+from salix import Struct
 
 
 class SearchPathElement:
@@ -16,8 +17,7 @@ class SearchPathElement:
         return f"provider={self.provider}, path={self.path}"
 
 
-@dataclass
-class SearchPathQuery:
+class SearchPathQuery(Struct, frozen=False):
     """
     Used in append and prepend API
     """

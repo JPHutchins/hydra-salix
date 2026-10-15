@@ -1,14 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 
 from omegaconf import MISSING, DictConfig
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class TestConfig:
+class TestConfig(Struct, frozen=False):
     param: int = MISSING
 
 

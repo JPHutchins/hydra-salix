@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from omegaconf import (
@@ -13,6 +12,7 @@ from omegaconf import (
     open_dict,
     read_write,
 )
+from salix import Struct
 
 from hydra.core.config_search_path import ConfigSearchPath
 from hydra.core.object_type import ObjectType
@@ -259,7 +259,7 @@ class ConfigRepository(IConfigRepository):
                 else:
                     # If node is a backed by Structured Config, flag it and temporarily keep the defaults list in.
                     # It will be removed later.
-                    # This is addressing an edge case where the defaults list re-appears once the dataclass is used
+                    # This is addressing an edge case where the defaults list re-appears once the Struct is used
                     # as a prototype during OmegaConf merge.
                     cfg._set_flag("HYDRA_REMOVE_TOP_LEVEL_DEFAULTS", True)
                     defaults = cfg.get("defaults", empty)
@@ -274,8 +274,7 @@ class ConfigRepository(IConfigRepository):
 
         return defaults
 
-    @dataclass
-    class Keywords:
+    class Keywords(Struct, frozen=False):
         optional: bool = False
         override: bool = False
         group: str = ""

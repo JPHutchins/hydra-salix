@@ -21,11 +21,11 @@ import itertools
 import logging
 import time
 from collections import OrderedDict
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from omegaconf import DictConfig, OmegaConf
+from salix import Struct
 
 from hydra.core.config_store import ConfigStore
 from hydra.core.override_parser.overrides_parser import OverridesParser
@@ -37,8 +37,7 @@ from hydra.plugins.sweeper import Sweeper
 from hydra.types import HydraContext, TaskFunction
 
 
-@dataclass
-class BasicSweeperConf:
+class BasicSweeperConf(Struct, frozen=False):
     _target_: str = "hydra._internal.core_plugins.basic_sweeper.BasicSweeper"
     max_batch_size: Optional[int] = None
     params: Optional[Dict[str, str]] = None

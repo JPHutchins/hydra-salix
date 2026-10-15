@@ -1,16 +1,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 from typing import Dict
 
 from omegaconf import MISSING
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 from hydra.core.hydra_config import HydraConfig
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     age: int = MISSING
     name: str = MISSING
     group: Dict[str, str] = MISSING

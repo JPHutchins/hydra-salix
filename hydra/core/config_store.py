@@ -1,9 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from omegaconf import DictConfig, OmegaConf
+from salix import Struct
 
 from hydra.core.object_type import ObjectType
 from hydra.core.singleton import Singleton
@@ -31,8 +31,7 @@ class ConfigStoreWithProvider:
     def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> Any: ...
 
 
-@dataclass
-class ConfigNode:
+class ConfigNode(Struct, frozen=False):
     name: str
     node: DictConfig
     group: Optional[str]

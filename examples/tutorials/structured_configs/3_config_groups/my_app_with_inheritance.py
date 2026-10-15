@@ -1,34 +1,30 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass
 
 from omegaconf import MISSING, OmegaConf
+from salix import Struct
 
 import hydra
 from hydra.core.config_store import ConfigStore
 
 
-@dataclass
-class DBConfig:
+class DBConfig(Struct, frozen=False):
     host: str = "localhost"
     port: int = MISSING
     driver: str = MISSING
 
 
-@dataclass
-class MySQLConfig(DBConfig):
+class MySQLConfig(DBConfig, frozen=False):
     driver: str = "mysql"
     port: int = 3306
 
 
-@dataclass
-class PostGreSQLConfig(DBConfig):
+class PostGreSQLConfig(DBConfig, frozen=False):
     driver: str = "postgresql"
     port: int = 5432
     timeout: int = 10
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     # We can now annotate db as DBConfig which
     # improves both static and dynamic type safety.
     db: DBConfig

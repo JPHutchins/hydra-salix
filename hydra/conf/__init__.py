@@ -1,49 +1,43 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from omegaconf import MISSING
+from salix import Struct
 
 from hydra.core.config_store import ConfigStore
 from hydra.types import RunMode
 
 
-@dataclass
-class HelpConf:
+class HelpConf(Struct, frozen=False):
     app_name: str = MISSING
     header: str = MISSING
     footer: str = MISSING
     template: str = MISSING
 
 
-@dataclass
-class HydraHelpConf:
+class HydraHelpConf(Struct, frozen=False):
     hydra_help: str = MISSING
     template: str = MISSING
 
 
-@dataclass
-class RunDir:
+class RunDir(Struct, frozen=False):
     dir: str = MISSING
 
 
-@dataclass
-class SweepDir:
+class SweepDir(Struct, frozen=False):
     dir: str = MISSING
     subdir: str = MISSING
 
 
-@dataclass
-class OverridesConf:
+class OverridesConf(Struct, frozen=False):
     # Overrides for the hydra configuration
-    hydra: List[str] = field(default_factory=lambda: [])
+    hydra: List[str] = []
     # Overrides for the task configuration
-    task: List[str] = field(default_factory=lambda: [])
+    task: List[str] = []
 
 
 # job runtime information will be populated here
-@dataclass
-class JobConf:
+class JobConf(Struct, frozen=False):
     # Job name, populated automatically unless specified by the user (in config or cli)
     name: str = MISSING
 
@@ -63,34 +57,30 @@ class JobConf:
     config_name: Optional[str] = MISSING
 
     # Environment variables to set remotely
-    env_set: Dict[str, str] = field(default_factory=dict)
+    env_set: Dict[str, str] = {}
     # Environment variables to copy from the launching machine
-    env_copy: List[str] = field(default_factory=list)
+    env_copy: List[str] = []
 
     # Job config
-    @dataclass
-    class JobConfig:
-        @dataclass
+    class JobConfig(Struct, frozen=False):
         # Default configuration for the ${hydra_override_dirname:} resolver.
-        class OverrideDirname:
+        class OverrideDirname(Struct, frozen=False):
             kv_sep: str = "="
             item_sep: str = ","
-            exclude_keys: List[str] = field(default_factory=list)
+            exclude_keys: List[str] = []
 
-        override_dirname: OverrideDirname = field(default_factory=OverrideDirname)
+        override_dirname: OverrideDirname = OverrideDirname()
 
-    config: JobConfig = field(default_factory=JobConfig)
+    config: JobConfig = JobConfig()
 
 
-@dataclass
-class ConfigSourceInfo:
+class ConfigSourceInfo(Struct, frozen=False):
     path: str
     schema: str
     provider: str
 
 
-@dataclass
-class RuntimeConf:
+class RuntimeConf(Struct, frozen=False):
     version: str = MISSING
     version_base: str = MISSING
     cwd: str = MISSING
@@ -99,35 +89,32 @@ class RuntimeConf:
 
     # Composition choices dictionary
     # Ideally, the value type would be Union[str, List[str], None]
-    choices: Dict[str, Any] = field(default_factory=lambda: {})
+    choices: Dict[str, Any] = {}
 
 
-@dataclass
-class HydraConf:
-    defaults: List[Any] = field(
-        default_factory=lambda: [
-            {"output": "default"},
-            {"launcher": "basic"},
-            {"sweeper": "basic"},
-            {"help": "default"},
-            {"hydra_help": "default"},
-            {"hydra_logging": "default"},
-            {"job_logging": "default"},
-            {"callbacks": None},
-            # env specific overrides
-            {"env": "default"},
-        ]
-    )
+class HydraConf(Struct, frozen=False):
+    defaults: List[Any] = [
+        {"output": "default"},
+        {"launcher": "basic"},
+        {"sweeper": "basic"},
+        {"help": "default"},
+        {"hydra_help": "default"},
+        {"hydra_logging": "default"},
+        {"job_logging": "default"},
+        {"callbacks": None},
+        # env specific overrides
+        {"env": "default"},
+    ]
 
     mode: Optional[RunMode] = None
     # Elements to append to the config search path.
     # Note: This can only be configured in the primary config.
-    searchpath: List[str] = field(default_factory=list)
+    searchpath: List[str] = []
 
     # Normal run output configuration
-    run: RunDir = field(default_factory=RunDir)
+    run: RunDir = RunDir()
     # Multi-run output configuration
-    sweep: SweepDir = field(default_factory=SweepDir)
+    sweep: SweepDir = SweepDir()
     # Logging configuration for Hydra
     hydra_logging: Dict[str, Any] = MISSING
     # Logging configuration for the job
@@ -138,12 +125,12 @@ class HydraConf:
     # Launcher configuration
     launcher: Any = MISSING
     # Callbacks configuration
-    callbacks: Dict[str, Any] = field(default_factory=dict)
+    callbacks: Dict[str, Any] = {}
 
     # Program Help template
-    help: HelpConf = field(default_factory=HelpConf)
+    help: HelpConf = HelpConf()
     # Hydra's Help template
-    hydra_help: HydraHelpConf = field(default_factory=HydraHelpConf)
+    hydra_help: HydraHelpConf = HydraHelpConf()
 
     # Output directory for produced configuration files and overrides.
     # E.g., hydra.yaml, overrides.yaml will go here. Useful for debugging
@@ -152,12 +139,12 @@ class HydraConf:
     output_subdir: Optional[str] = ".hydra"
 
     # Those lists will contain runtime overrides
-    overrides: OverridesConf = field(default_factory=OverridesConf)
+    overrides: OverridesConf = OverridesConf()
 
-    job: JobConf = field(default_factory=JobConf)
+    job: JobConf = JobConf()
 
     # populated at runtime
-    runtime: RuntimeConf = field(default_factory=RuntimeConf)
+    runtime: RuntimeConf = RuntimeConf()
 
     # Can be a boolean, string or a list of strings
     # If a boolean, setting to true will set the log level for the root logger to debug

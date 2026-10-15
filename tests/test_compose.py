@@ -3,13 +3,13 @@ import re
 import subprocess
 import sys
 import warnings
-from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from omegaconf import MISSING, OmegaConf
 from pytest import fixture, mark, param, raises, warns
+from salix import Struct
 
 from hydra import (
     __version__,
@@ -481,9 +481,8 @@ def test_initialization_root_module(monkeypatch: Any) -> None:
 def test_adding_to_sc_dict(
     hydra_restore_singletons: Any, overrides: List[str], expected: Any
 ) -> None:
-    @dataclass
-    class Config:
-        map: Dict[str, str] = field(default_factory=dict)
+    class Config(Struct, frozen=False):
+        map: Dict[str, str] = {}
 
     ConfigStore.instance().store(name="config", node=Config)
 
@@ -524,9 +523,8 @@ def test_adding_to_sc_dict(
 def test_extending_list(
     hydra_restore_singletons: Any, overrides: List[str], expected: Any
 ) -> None:
-    @dataclass
-    class Config:
-        list_key: Any = field(default_factory=lambda: ["a", "b", "c"])
+    class Config(Struct, frozen=False):
+        list_key: Any = ["a", "b", "c"]
 
     ConfigStore.instance().store(name="config", node=Config)
 
@@ -631,8 +629,7 @@ class TestAdd:
         assert cfg == {"a": 1, "nested": {"choice": {"a": 2}}}
 
     def test_add_to_structured_config(self, hydra_restore_singletons: Any) -> None:
-        @dataclass
-        class Config:
+        class Config(Struct, frozen=False):
             a: int = 10
 
         ConfigStore.instance().store(name="config", node=Config, package="nested")
@@ -882,16 +879,12 @@ def test_removed_compose_strict_flag(strict: Optional[bool]) -> None:
 
 @mark.usefixtures("initialize_hydra_no_path")
 def test_missing_node_with_defaults_list(hydra_restore_singletons: Any) -> None:
-    @dataclass
-    class Reducer:
-        defaults: List[Any] = field(default_factory=lambda: [])
+    class Reducer(Struct, frozen=False):
+        defaults: List[Any] = []
 
-    @dataclass
-    class Trainer:
+    class Trainer(Struct, frozen=False):
         reducer: Reducer = MISSING
-        defaults: List[Any] = field(
-            default_factory=lambda: [{"/reducer": "base_reducer"}]
-        )
+        defaults: List[Any] = [{"/reducer": "base_reducer"}]
 
     cs = ConfigStore.instance()
     cs.store(name="base_trainer", node=Trainer(), group="trainer")
@@ -908,11 +901,10 @@ def test_enum_with_removed_defaults_list(hydra_restore_singletons: Any) -> None:
         Y = 1
         Z = 2
 
-    @dataclass
-    class Conf:
-        enum_dict: Dict[Category, str] = field(default_factory=dict)
-        int_dict: Dict[int, str] = field(default_factory=dict)
-        str_dict: Dict[str, str] = field(default_factory=dict)
+    class Conf(Struct, frozen=False):
+        enum_dict: Dict[Category, str] = {}
+        int_dict: Dict[int, str] = {}
+        str_dict: Dict[str, str] = {}
 
     cs = ConfigStore.instance()
     cs.store(name="conf", node=Conf)
